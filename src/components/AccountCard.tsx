@@ -11,6 +11,10 @@ interface AccountCardProps {
   onCompleteJob?: (accountId: string) => void;
 }
 
+interface EloInfoProps {
+  isLast?: boolean;
+}
+
 const Card = styled.div`
   background-color: white;
   border-radius: 0.75rem;
@@ -62,7 +66,7 @@ const CardBody = styled.div`
   padding: 1.5rem;
 `;
 
-const EloInfo = styled.div`
+const EloInfo = styled.div<EloInfoProps>`
   display: flex;
   justify-content: space-between;
   align-items: center;

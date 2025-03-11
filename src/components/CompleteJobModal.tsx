@@ -65,7 +65,7 @@ const Label = styled.label`
   margin-bottom: 0.5rem;
 `;
 
-const Input = styled.input`
+const Select = styled.select`
   padding: 0.75rem;
   border: 2px solid #e5e7eb;
   border-radius: 0.375rem;
@@ -151,13 +151,29 @@ const Error = styled.div`
   margin-top: 0.5rem;
 `;
 
+// Lista de elos
+const elos = [
+  'FERRO',
+  'BRONZE',
+  'PRATA',
+  'OURO',
+  'PLATINA',
+  'ESMERALDA',
+  'DIAMANTE',
+  'MESTRE'
+];
+
+// Lista de tiers
+const tiers = ['I', 'II', 'III', 'IV'];
+
 const CompleteJobModal: React.FC<CompleteJobModalProps> = ({ 
   accountId, 
   boosterId, 
   onClose, 
   onCompleteSuccess 
 }) => {
-  const [imageUrl, setImageUrl] = useState('');
+  const [finalElo, setFinalElo] = useState('OURO');
+  const [finalTier, setFinalTier] = useState('IV');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -175,7 +191,6 @@ const CompleteJobModal: React.FC<CompleteJobModalProps> = ({
         setFilePreview(result);
       };
       reader.readAsDataURL(file);
-      setImageUrl(''); // Limpa a URL se um arquivo for selecionado
     }
   };
   
@@ -186,8 +201,8 @@ const CompleteJobModal: React.FC<CompleteJobModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!imageUrl && !uploadedFile) {
-      setError('Por favor, forneça um print da tela do LoL com o elo alcançado.');
+    if (!finalElo || !finalTier) {
+      setError('Por favor, selecione o elo e divisão final alcançados.');
       return;
     }
     
@@ -195,21 +210,16 @@ const CompleteJobModal: React.FC<CompleteJobModalProps> = ({
       setIsSubmitting(true);
       setError(null);
       
-      let screenshotUrl = imageUrl;
-      
+      // Simulando o upload do arquivo (se necessário)
       if (uploadedFile) {
         // Em produção, aqui você faria upload do arquivo para um serviço de armazenamento
         // Como o Supabase Storage, AWS S3, etc. e obteria a URL
-        // Para fins de demonstração, usaremos um simulador:
         
         // Simulando o upload
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // URL simulada (em produção seria a URL real do arquivo no storage)
-        screenshotUrl = `https://storage.example.com/screenshots/${Date.now()}_${uploadedFile.name}`;
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
-      await completeJob(accountId, boosterId, screenshotUrl);
+      await completeJob(accountId, boosterId, finalElo, finalTier);
       onCompleteSuccess();
     } catch (err) {
       console.error('Erro ao finalizar job:', err);
@@ -220,50 +230,65 @@ const CompleteJobModal: React.FC<CompleteJobModalProps> = ({
   };
   
   return (
-    <ModalOverlay onClick={onClose}>
-      <ModalContent onClick={(e) => e.stopPropagation()}>
+    <ModalOverlay>
+      <ModalContent>
         <ModalHeader>
-          <h3>Finalizar Job</h3>
+          <h3>Finalizar Conta</h3>
         </ModalHeader>
-        
         <ModalBody>
           <Form onSubmit={handleSubmit}>
             <FormGroup>
-              <Label>URL da imagem (opcional)</Label>
-              <Input 
-                type="text"
-                value={imageUrl}
-                onChange={(e) => {
-                  setImageUrl(e.target.value);
-                  setFilePreview(null);
-                  setUploadedFile(null);
-                }}
-                placeholder="https://exemplo.com/imagem.jpg"
-                disabled={isSubmitting || !!filePreview}
-              />
+              <Label>Elo Final</Label>
+              <Select 
+                value={finalElo}
+                onChange={(e) => setFinalElo(e.target.value)}
+                required
+              >
+                {elos.map((elo) => (
+                  <option key={elo} value={elo}>{elo}</option>
+                ))}
+              </Select>
             </FormGroup>
             
             <FormGroup>
-              <Label>OU Envie um print da tela do LoL</Label>
+              <Label>Divisão Final</Label>
+              <Select 
+                value={finalTier}
+                onChange={(e) => setFinalTier(e.target.value)}
+                required
+              >
+                {tiers.map((tier) => (
+                  <option key={tier} value={tier}>{tier}</option>
+                ))}
+              </Select>
+            </FormGroup>
+            
+            <FormGroup>
+              <Label>Print do LoL (opcional)</Label>
               <FileInputLabel onClick={handleClickFileInput}>
-                <span>📷 {uploadedFile ? uploadedFile.name : 'Clique para selecionar um arquivo'}</span>
-                <p style={{ margin: '0.5rem 0 0', fontSize: '0.875rem', color: '#6b7280' }}>
-                  {uploadedFile ? 'Clique para selecionar outro arquivo' : 'JPG, PNG ou GIF'}
-                </p>
+                {filePreview ? (
+                  <FilePreview>
+                    <img src={filePreview} alt="Screenshot Preview" />
+                  </FilePreview>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#6b7280" viewBox="0 0 16 16">
+                      <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                      <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                    </svg>
+                    <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                      <p style={{ color: '#4b5563', margin: '0' }}>Clique para fazer upload de um screenshot</p>
+                      <p style={{ color: '#9ca3af', fontSize: '0.875rem', margin: '0.5rem 0 0' }}>PNG, JPG ou JPEG</p>
+                    </div>
+                  </>
+                )}
               </FileInputLabel>
               <FileInput 
-                ref={fileInputRef}
                 type="file" 
-                accept="image/*"
+                ref={fileInputRef} 
+                accept="image/png, image/jpeg, image/jpg"
                 onChange={handleFileChange}
-                disabled={isSubmitting}
               />
-              
-              {filePreview && (
-                <FilePreview>
-                  <img src={filePreview} alt="Preview" />
-                </FilePreview>
-              )}
             </FormGroup>
             
             {error && <Error>{error}</Error>}
@@ -280,9 +305,9 @@ const CompleteJobModal: React.FC<CompleteJobModalProps> = ({
               <Button 
                 type="submit" 
                 variant="primary"
-                disabled={isSubmitting || (!imageUrl && !uploadedFile)}
+                disabled={isSubmitting}
               >
-                {isSubmitting ? 'Enviando...' : 'Confirmar Finalização'}
+                {isSubmitting ? 'Finalizando...' : 'Finalizar Conta'}
               </Button>
             </ButtonGroup>
           </Form>

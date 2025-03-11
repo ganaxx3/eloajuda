@@ -125,7 +125,8 @@ export const takeJob = async (accountId: string, boosterId: string) => {
     console.error('Erro ao registrar log:', logError);
   }
   
-  return data as Account;
+  // Retornamos o primeiro item do array, se existir
+  return data && data.length > 0 ? data[0] as Account : null;
 };
 
 export const pauseJob = async (accountId: string, boosterId: string, pauseReason: string, currentElo: string, currentTier: string) => {

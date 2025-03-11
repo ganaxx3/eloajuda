@@ -57,13 +57,29 @@ export const getAvailableAccounts = async () => {
   return data as Account[];
 };
 
+export const formatBoosterId = (boosterId: string): string => {
+  if (!boosterId) return '';
+  
+  // Verificar se o boosterId parece um número simples
+  if (/^\d+$/.test(boosterId)) {
+    // Se for um número simples, crie um UUID v4 baseado nele
+    return `11111111-1111-1111-1111-${boosterId.padStart(12, '0')}`;
+  }
+  
+  // Se já parece um UUID, retorne como está
+  return boosterId;
+};
+
 export const getBoosterAccounts = async (boosterId: string) => {
   const supabase = getSupabase();
+  
+  // Converter para UUID válido
+  const formattedBoosterId = formatBoosterId(boosterId);
   
   const { data, error } = await supabase
     .from('accounts')
     .select('*')
-    .eq('assigned_to', boosterId)
+    .eq('assigned_to', formattedBoosterId)
     .in('status', ['in_progress', 'paused'])
     .order('created_at', { ascending: false });
     
@@ -100,7 +116,7 @@ export const takeJob = async (accountId: string, boosterId: string) => {
     .from('accounts')
     .update({ 
       status: 'in_progress',
-      assigned_to: boosterId,
+      assigned_to: formatBoosterId(boosterId),
       updated_at: new Date().toISOString()
     })
     .eq('id', accountId)
@@ -116,7 +132,7 @@ export const takeJob = async (accountId: string, boosterId: string) => {
     .from('job_logs')
     .insert({
       account_id: accountId,
-      booster_id: boosterId,
+      booster_id: formatBoosterId(boosterId),
       action: 'started',
       created_at: new Date().toISOString()
     });
@@ -141,7 +157,7 @@ export const pauseJob = async (accountId: string, boosterId: string, pauseReason
       updated_at: new Date().toISOString()
     })
     .eq('id', accountId)
-    .eq('assigned_to', boosterId)
+    .eq('assigned_to', formatBoosterId(boosterId))
     .eq('status', 'in_progress')
     .select()
     .single();
@@ -156,7 +172,7 @@ export const pauseJob = async (accountId: string, boosterId: string, pauseReason
     .from('job_logs')
     .insert({
       account_id: accountId,
-      booster_id: boosterId,
+      booster_id: formatBoosterId(boosterId),
       action: 'paused',
       pause_reason: pauseReason,
       current_elo: currentElo,
@@ -181,7 +197,7 @@ export const completeJob = async (accountId: string, boosterId: string, screensh
       updated_at: new Date().toISOString()
     })
     .eq('id', accountId)
-    .eq('assigned_to', boosterId)
+    .eq('assigned_to', formatBoosterId(boosterId))
     .in('status', ['in_progress', 'paused'])
     .select()
     .single();
@@ -196,7 +212,7 @@ export const completeJob = async (accountId: string, boosterId: string, screensh
     .from('job_logs')
     .insert({
       account_id: accountId,
-      booster_id: boosterId,
+      booster_id: formatBoosterId(boosterId),
       action: 'completed',
       screenshot_url: screenshotUrl,
       created_at: new Date().toISOString()
@@ -271,7 +287,7 @@ export const approveCompletedJob = async (accountId: string, boosterId: string) 
     .from('chat_messages')
     .insert({
       sender_id: 'admin', // ID do admin
-      receiver_id: boosterId,
+      receiver_id: formatBoosterId(boosterId),
       message: message,
       read: false,
       created_at: new Date().toISOString()

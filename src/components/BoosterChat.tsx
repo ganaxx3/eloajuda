@@ -51,6 +51,7 @@ const MessageBubble = styled.div<{ isOwn: boolean }>`
   color: ${(props) => (props.isOwn ? 'white' : '#1f2937')};
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: relative;
+  font-weight: 400;
   
   &:after {
     content: '';

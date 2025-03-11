@@ -57,17 +57,20 @@ export const getAvailableAccounts = async () => {
   return data as Account[];
 };
 
-export const formatBoosterId = (boosterId: string): string => {
+export const formatBoosterId = (boosterId: string | number): string => {
   if (!boosterId) return '';
   
+  // Converter para string se for número
+  const boosterIdStr = String(boosterId);
+  
   // Verificar se o boosterId parece um número simples
-  if (/^\d+$/.test(boosterId)) {
+  if (/^\d+$/.test(boosterIdStr)) {
     // Se for um número simples, crie um UUID v4 baseado nele
-    return `11111111-1111-1111-1111-${boosterId.padStart(12, '0')}`;
+    return `11111111-1111-1111-1111-${boosterIdStr.padStart(12, '0')}`;
   }
   
   // Se já parece um UUID, retorne como está
-  return boosterId;
+  return boosterIdStr;
 };
 
 export const getBoosterAccounts = async (boosterId: string) => {

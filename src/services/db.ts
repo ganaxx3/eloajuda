@@ -131,25 +131,11 @@ export const takeJob = async (accountId: string, boosterId: string) => {
     throw error;
   }
   
-  try {
-    // Tenta registrar o log, mas não bloqueia o fluxo principal se falhar
-    const { error: logError } = await supabase
-      .from('job_logs')
-      .insert({
-        account_id: accountId,
-        booster_id: formatBoosterId(boosterId),
-        action: 'started',
-        created_at: new Date().toISOString()
-      });
-      
-    if (logError) {
-      console.error('Erro ao registrar log:', logError);
-      // Não lança o erro para não interromper o fluxo principal
-    }
-  } catch (logException) {
-    console.error('Exceção ao registrar log:', logException);
-    // Continua com o fluxo principal mesmo se o log falhar
-  }
+  tryLogAction({
+    account_id: accountId,
+    booster_id: boosterId,
+    action: 'started'
+  });
   
   // Retornamos o primeiro item do array, se existir
   return data && data.length > 0 ? data[0] as Account : null;
@@ -177,28 +163,14 @@ export const pauseJob = async (accountId: string, boosterId: string, pauseReason
     throw error;
   }
   
-  try {
-    // Tenta registrar o log, mas não bloqueia o fluxo principal se falhar
-    const { error: logError } = await supabase
-      .from('job_logs')
-      .insert({
-        account_id: accountId,
-        booster_id: formatBoosterId(boosterId),
-        action: 'paused',
-        pause_reason: pauseReason,
-        current_elo: currentElo,
-        current_tier: currentTier,
-        created_at: new Date().toISOString()
-      });
-      
-    if (logError) {
-      console.error('Erro ao registrar log:', logError);
-      // Não lança o erro para não interromper o fluxo principal
-    }
-  } catch (logException) {
-    console.error('Exceção ao registrar log:', logException);
-    // Continua com o fluxo principal mesmo se o log falhar
-  }
+  tryLogAction({
+    account_id: accountId,
+    booster_id: boosterId,
+    action: 'paused',
+    pause_reason: pauseReason,
+    current_elo: currentElo,
+    current_tier: currentTier
+  });
   
   return data;
 };
@@ -226,27 +198,13 @@ export const completeJob = async (accountId: string, boosterId: string, finalElo
     throw error;
   }
   
-  try {
-    // Tenta registrar o log, mas não bloqueia o fluxo principal se falhar
-    const { error: logError } = await supabase
-      .from('job_logs')
-      .insert({
-        account_id: accountId,
-        booster_id: formatBoosterId(boosterId),
-        action: 'completed',
-        current_elo: finalElo,
-        current_tier: finalTier,
-        created_at: new Date().toISOString()
-      });
-      
-    if (logError) {
-      console.error('Erro ao registrar log:', logError);
-      // Não lança o erro para não interromper o fluxo principal
-    }
-  } catch (logException) {
-    console.error('Exceção ao registrar log:', logException);
-    // Continua com o fluxo principal mesmo se o log falhar
-  }
+  tryLogAction({
+    account_id: accountId,
+    booster_id: boosterId,
+    action: 'completed',
+    current_elo: finalElo,
+    current_tier: finalTier
+  });
   
   return data;
 };
@@ -383,4 +341,45 @@ export const markMessagesAsRead = async (userId: string) => {
   }
   
   return { success: true };
+};
+
+// Nova função para lidar com o registro de logs de maneira centralizada
+export const tryLogAction = async (data: {
+  account_id: string;
+  booster_id: string | number;
+  action: 'started' | 'paused' | 'completed';
+  pause_reason?: string;
+  current_elo?: string;
+  current_tier?: string;
+}) => {
+  try {
+    const supabase = getSupabase();
+    
+    // Vamos tentar fazer a inserção direta primeiro
+    const { error } = await supabase
+      .from('job_logs')
+      .insert({
+        account_id: data.account_id,
+        booster_id: formatBoosterId(data.booster_id),
+        action: data.action,
+        pause_reason: data.pause_reason,
+        current_elo: data.current_elo,
+        current_tier: data.current_tier,
+        created_at: new Date().toISOString()
+      });
+    
+    if (error) {
+      if (error.code === '42501') {
+        // Se o erro for de permissão, usaremos um método alternativo
+        // Como a operação principal (takeJob, pauseJob, completeJob) já foi realizada,
+        // registramos apenas o erro e continuamos
+        console.warn('Sem permissão para registrar log. Operação principal não foi afetada.');
+      } else {
+        console.error('Erro ao registrar log:', error);
+      }
+    }
+  } catch (err) {
+    console.error('Exceção ao registrar log:', err);
+    // Não repassamos o erro para fora, já que isso é uma operação secundária
+  }
 };

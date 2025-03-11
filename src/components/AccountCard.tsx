@@ -159,11 +159,6 @@ const AccountCard: React.FC<AccountCardProps> = ({
   onPauseJob,
   onCompleteJob
 }) => {
-  console.log("Current Elo:", account.current_elo);
-  console.log("Desired Elo:", account.desired_elo);
-  console.log("Current Elo Icon URL:", getEloIcon(account.current_elo));
-  console.log("Desired Elo Icon URL:", getEloIcon(account.desired_elo));
-  
   return (
     <Card>
       <CardHeader>

@@ -134,13 +134,13 @@ const Home = () => {
       const valorFormatado = `R$ ${finalPrice.toFixed(2).replace('.', ',')}`;
       
       // Criar a mensagem personalizada com os dados do usuário
-      const mensagemWhatsApp = `Olá, eu quero contratar o elo ajuda! Meu elo: ${eloAtual} e quero ir pro ${eloDesejado} e valor: ${valorFormatado}`;
+      const mensagemWhatsApp = `Olá, Tenho interesse no Serviço de EloJob. Meu elo atual é: ${eloAtual}. Meu objetivo é alcançar o ${eloDesejado}. Valor calculado foi de: ${valorFormatado}`;
       
       // Codificar a mensagem para URL
       const mensagemCodificada = encodeURIComponent(mensagemWhatsApp);
       
       // Número de WhatsApp para enviar a mensagem
-      const numeroWhatsApp = "011977377234";
+      const numeroWhatsApp = "5511977377234";
       
       // Criar a URL do WhatsApp
       const whatsappUrl = `https://wa.me/${numeroWhatsApp}?text=${mensagemCodificada}`;

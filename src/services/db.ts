@@ -16,6 +16,7 @@ export interface Account {
   assigned_to?: string; // ID do booster
   created_at: string;
   updated_at: string;
+  completed_at?: string;
 }
 
 export interface JobLog {
@@ -97,7 +98,7 @@ export const getBoosterAccounts = async (boosterId: string) => {
 export const takeJob = async (accountId: string, boosterId: string) => {
   const supabase = getSupabase();
   
-  // Primeiro verificamos se a conta existe e está disponível
+  // Primeiro verificamos se a conta está disponível
   const { data: accountCheck, error: checkError } = await supabase
     .from('accounts')
     .select('*')
@@ -130,18 +131,24 @@ export const takeJob = async (accountId: string, boosterId: string) => {
     throw error;
   }
   
-  // Registra o log
-  const { error: logError } = await supabase
-    .from('job_logs')
-    .insert({
-      account_id: accountId,
-      booster_id: formatBoosterId(boosterId),
-      action: 'started',
-      created_at: new Date().toISOString()
-    });
-    
-  if (logError) {
-    console.error('Erro ao registrar log:', logError);
+  try {
+    // Tenta registrar o log, mas não bloqueia o fluxo principal se falhar
+    const { error: logError } = await supabase
+      .from('job_logs')
+      .insert({
+        account_id: accountId,
+        booster_id: formatBoosterId(boosterId),
+        action: 'started',
+        created_at: new Date().toISOString()
+      });
+      
+    if (logError) {
+      console.error('Erro ao registrar log:', logError);
+      // Não lança o erro para não interromper o fluxo principal
+    }
+  } catch (logException) {
+    console.error('Exceção ao registrar log:', logException);
+    // Continua com o fluxo principal mesmo se o log falhar
   }
   
   // Retornamos o primeiro item do array, se existir
@@ -170,34 +177,43 @@ export const pauseJob = async (accountId: string, boosterId: string, pauseReason
     throw error;
   }
   
-  // Registra o log
-  const { error: logError } = await supabase
-    .from('job_logs')
-    .insert({
-      account_id: accountId,
-      booster_id: formatBoosterId(boosterId),
-      action: 'paused',
-      pause_reason: pauseReason,
-      current_elo: currentElo,
-      current_tier: currentTier,
-      created_at: new Date().toISOString()
-    });
-    
-  if (logError) {
-    console.error('Erro ao registrar log de pausa:', logError);
+  try {
+    // Tenta registrar o log, mas não bloqueia o fluxo principal se falhar
+    const { error: logError } = await supabase
+      .from('job_logs')
+      .insert({
+        account_id: accountId,
+        booster_id: formatBoosterId(boosterId),
+        action: 'paused',
+        pause_reason: pauseReason,
+        current_elo: currentElo,
+        current_tier: currentTier,
+        created_at: new Date().toISOString()
+      });
+      
+    if (logError) {
+      console.error('Erro ao registrar log:', logError);
+      // Não lança o erro para não interromper o fluxo principal
+    }
+  } catch (logException) {
+    console.error('Exceção ao registrar log:', logException);
+    // Continua com o fluxo principal mesmo se o log falhar
   }
   
-  return data as Account;
+  return data;
 };
 
-export const completeJob = async (accountId: string, boosterId: string, screenshotUrl: string) => {
+export const completeJob = async (accountId: string, boosterId: string, finalElo: string, finalTier: string) => {
   const supabase = getSupabase();
   
   const { data, error } = await supabase
     .from('accounts')
     .update({ 
       status: 'completed',
-      updated_at: new Date().toISOString()
+      current_elo: finalElo,
+      current_tier: finalTier,
+      updated_at: new Date().toISOString(),
+      completed_at: new Date().toISOString()
     })
     .eq('id', accountId)
     .eq('assigned_to', formatBoosterId(boosterId))
@@ -206,26 +222,33 @@ export const completeJob = async (accountId: string, boosterId: string, screensh
     .single();
     
   if (error) {
-    console.error('Erro ao finalizar job:', error);
+    console.error('Erro ao completar job:', error);
     throw error;
   }
   
-  // Registra o log
-  const { error: logError } = await supabase
-    .from('job_logs')
-    .insert({
-      account_id: accountId,
-      booster_id: formatBoosterId(boosterId),
-      action: 'completed',
-      screenshot_url: screenshotUrl,
-      created_at: new Date().toISOString()
-    });
-    
-  if (logError) {
-    console.error('Erro ao registrar log de finalização:', logError);
+  try {
+    // Tenta registrar o log, mas não bloqueia o fluxo principal se falhar
+    const { error: logError } = await supabase
+      .from('job_logs')
+      .insert({
+        account_id: accountId,
+        booster_id: formatBoosterId(boosterId),
+        action: 'completed',
+        current_elo: finalElo,
+        current_tier: finalTier,
+        created_at: new Date().toISOString()
+      });
+      
+    if (logError) {
+      console.error('Erro ao registrar log:', logError);
+      // Não lança o erro para não interromper o fluxo principal
+    }
+  } catch (logException) {
+    console.error('Exceção ao registrar log:', logException);
+    // Continua com o fluxo principal mesmo se o log falhar
   }
   
-  return data as Account;
+  return data;
 };
 
 export const getPausedAccounts = async () => {

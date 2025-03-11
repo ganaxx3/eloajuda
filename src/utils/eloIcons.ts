@@ -19,8 +19,11 @@ export const formatElo = (elo: string, tier?: string): string => {
 
 // Função para obter a URL do ícone do elo
 export const getEloIcon = (elo: string): string => {
+  if (!elo) return ''; // Proteção contra valores undefined ou null
+  
   const upperElo = elo.toUpperCase();
-  return eloIcons[upperElo as keyof typeof eloIcons] || '';
+  return eloIcons[upperElo as keyof typeof eloIcons] || 
+    'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/provisional.png'; // Imagem padrão caso o elo não seja encontrado
 };
 
 // Função para abrir o perfil do jogador no DeepLOL

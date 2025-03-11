@@ -37,7 +37,7 @@ export const getSupabase = (): SupabaseClient => {
 
 // Interface para usuário da tabela
 export interface User {
-  id: number;
+  id: string;
   username: string;
   password: string;
   role?: string;

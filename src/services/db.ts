@@ -78,6 +78,24 @@ export const getBoosterAccounts = async (boosterId: string) => {
 export const takeJob = async (accountId: string, boosterId: string) => {
   const supabase = getSupabase();
   
+  // Primeiro verificamos se a conta existe e está disponível
+  const { data: accountCheck, error: checkError } = await supabase
+    .from('accounts')
+    .select('*')
+    .eq('id', accountId)
+    .eq('status', 'available')
+    .maybeSingle(); // Usamos maybeSingle em vez de single
+    
+  if (checkError) {
+    console.error('Erro ao verificar conta:', checkError);
+    throw checkError;
+  }
+  
+  if (!accountCheck) {
+    throw new Error('Conta não encontrada ou não está disponível');
+  }
+  
+  // Agora atualizamos a conta
   const { data, error } = await supabase
     .from('accounts')
     .update({ 
@@ -86,9 +104,7 @@ export const takeJob = async (accountId: string, boosterId: string) => {
       updated_at: new Date().toISOString()
     })
     .eq('id', accountId)
-    .eq('status', 'available')
-    .select()
-    .single();
+    .select();
     
   if (error) {
     console.error('Erro ao pegar job:', error);

@@ -345,6 +345,7 @@ export const markMessagesAsRead = async (userId: string) => {
 
 // Flag para controlar se devemos tentar registrar logs
 let canLogActions = true;
+let permissionsChecked = false;
 
 // Nova função para lidar com o registro de logs de maneira centralizada
 export const tryLogAction = async (data: {
@@ -361,6 +362,34 @@ export const tryLogAction = async (data: {
   try {
     const supabase = getSupabase();
     
+    // Verifica permissões uma vez antes de tentar fazer operações de log
+    if (!permissionsChecked) {
+      try {
+        // Fazemos uma verificação de permissão com uma solicitação simples
+        const { error: permissionCheckError } = await supabase
+          .from('job_logs')
+          .select('id')
+          .limit(1);
+        
+        if (permissionCheckError) {
+          if (permissionCheckError.code === '42501' || permissionCheckError.message?.includes('401')) {
+            // Se o erro for de permissão, desabilitamos as tentativas futuras
+            canLogActions = false;
+            console.warn('Sem permissão para registrar logs. Funcionalidade de log desativada para esta sessão.');
+            permissionsChecked = true;
+            return;
+          }
+        }
+        
+        permissionsChecked = true;
+      } catch (err) {
+        canLogActions = false;
+        permissionsChecked = true;
+        console.warn('Erro ao verificar permissões de log. Funcionalidade de log desativada para esta sessão.');
+        return;
+      }
+    }
+    
     // Vamos tentar fazer a inserção direta primeiro
     const { error } = await supabase
       .from('job_logs')
@@ -375,7 +404,7 @@ export const tryLogAction = async (data: {
       });
     
     if (error) {
-      if (error.code === '42501') {
+      if (error.code === '42501' || error.message?.includes('401')) {
         // Se o erro for de permissão, desabilitamos as tentativas futuras
         canLogActions = false;
         console.warn('Sem permissão para registrar logs. Funcionalidade de log desativada para esta sessão.');

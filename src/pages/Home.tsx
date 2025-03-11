@@ -12,7 +12,7 @@ import diamanteElo from '../assets/images/Diamante.webp'
 import mestreElo from '../assets/images/Mestre.webp'
 import graoMestreElo from '../assets/images/Graomestre.png'
 import challengerElo from '../assets/images/Desafiante.webp'
-import { sendEloRequest, calculatePrice } from '../services/api'
+import { calculatePrice } from '../services/api'
 
 const Home = () => {
   const [currentElo, setCurrentElo] = useState('PRATA')
@@ -126,20 +126,32 @@ const Home = () => {
     setMessage('');
     
     try {
-      const response = await sendEloRequest({
-        currentElo,
-        currentTier,
-        desiredElo
-      });
+      // Formatar o elo atual e desejado para a mensagem
+      const eloAtual = `${currentElo}${currentElo !== 'MESTRE' && currentElo !== 'GRAO-MESTRE' && currentElo !== 'CHALLENGER' ? ' ' + currentTier : ''}`;
+      const eloDesejado = `${desiredElo}${desiredElo !== 'MESTRE' && desiredElo !== 'GRAO-MESTRE' && desiredElo !== 'CHALLENGER' ? ' ' + desiredTier : ''}`;
       
-      setMessage(response.message);
+      // Formatar o valor para a mensagem
+      const valorFormatado = `R$ ${finalPrice.toFixed(2).replace('.', ',')}`;
       
-      // Redirect to Discord after successful request
-      window.location.href = 'https://discord.gg/S67EXpFFm5';
+      // Criar a mensagem personalizada com os dados do usuário
+      const mensagemWhatsApp = `Olá, eu quero contratar o elo ajuda! Meu elo: ${eloAtual} e quero ir pro ${eloDesejado} e valor: ${valorFormatado}`;
       
+      // Codificar a mensagem para URL
+      const mensagemCodificada = encodeURIComponent(mensagemWhatsApp);
+      
+      // Número de WhatsApp para enviar a mensagem
+      const numeroWhatsApp = "011977377234";
+      
+      // Criar a URL do WhatsApp
+      const whatsappUrl = `https://wa.me/${numeroWhatsApp}?text=${mensagemCodificada}`;
+      
+      // Abrir o WhatsApp em uma nova janela
+      window.open(whatsappUrl, '_blank');
+      
+      setMessage('Redirecionando para o WhatsApp...');
     } catch (error) {
       setMessage('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.');
-      console.error('Erro ao enviar solicitação:', error);
+      console.error('Erro ao processar solicitação:', error);
     } finally {
       setLoading(false);
     }

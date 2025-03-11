@@ -343,6 +343,9 @@ export const markMessagesAsRead = async (userId: string) => {
   return { success: true };
 };
 
+// Flag para controlar se devemos tentar registrar logs
+let canLogActions = true;
+
 // Nova função para lidar com o registro de logs de maneira centralizada
 export const tryLogAction = async (data: {
   account_id: string;
@@ -352,6 +355,9 @@ export const tryLogAction = async (data: {
   current_elo?: string;
   current_tier?: string;
 }) => {
+  // Se já sabemos que não podemos registrar logs, retornamos imediatamente
+  if (!canLogActions) return;
+  
   try {
     const supabase = getSupabase();
     
@@ -370,10 +376,9 @@ export const tryLogAction = async (data: {
     
     if (error) {
       if (error.code === '42501') {
-        // Se o erro for de permissão, usaremos um método alternativo
-        // Como a operação principal (takeJob, pauseJob, completeJob) já foi realizada,
-        // registramos apenas o erro e continuamos
-        console.warn('Sem permissão para registrar log. Operação principal não foi afetada.');
+        // Se o erro for de permissão, desabilitamos as tentativas futuras
+        canLogActions = false;
+        console.warn('Sem permissão para registrar logs. Funcionalidade de log desativada para esta sessão.');
       } else {
         console.error('Erro ao registrar log:', error);
       }

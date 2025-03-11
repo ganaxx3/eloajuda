@@ -1,14 +1,33 @@
-// Mapeamento de elos para URLs de imagens de ícones
+// Importando as imagens locais
+import ferroImg from '../assets/images/Ferro.webp';
+import prataImg from '../assets/images/Prata.png';
+import bronzeImg from '../assets/images/Bronze.webp';
+import ouroImg from '../assets/images/Ouro.webp';
+import platinImg from '../assets/images/Platina.webp';
+import esmeraldImg from '../assets/images/Esmeralda.webp';
+import diamanteImg from '../assets/images/Diamante.webp';
+import mestreImg from '../assets/images/Mestre.webp';
+
+// Mapeamento de elos para URLs de imagens de ícones (usando imagens locais)
 export const eloIcons = {
-  'IRON': 'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/iron.png',
-  'BRONZE': 'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/bronze.png',
-  'SILVER': 'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/silver.png',
-  'GOLD': 'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/gold.png',
-  'PLATINUM': 'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/platinum.png',
-  'DIAMOND': 'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/diamond.png',
-  'MASTER': 'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/master.png',
-  'GRANDMASTER': 'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/grandmaster.png',
-  'CHALLENGER': 'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/challenger.png',
+  // Nomes em português
+  'FERRO': ferroImg,
+  'BRONZE': bronzeImg, 
+  'PRATA': prataImg,
+  'OURO': ouroImg,
+  'PLATINA': platinImg,
+  'ESMERALDA': esmeraldImg,
+  'DIAMANTE': diamanteImg,
+  'MESTRE': mestreImg,
+  
+  // Nomes em inglês (para compatibilidade)
+  'IRON': ferroImg,
+  'SILVER': prataImg,
+  'GOLD': ouroImg,
+  'PLATINUM': platinImg,
+  'EMERALD': esmeraldImg,
+  'DIAMOND': diamanteImg,
+  'MASTER': mestreImg
 };
 
 // Função para formatar o elo completo (elo + tier)
@@ -17,13 +36,12 @@ export const formatElo = (elo: string, tier?: string): string => {
   return `${elo} ${tier}`;
 };
 
-// Função para obter a URL do ícone do elo
+// Função para obter o ícone do elo
 export const getEloIcon = (elo: string): string => {
-  if (!elo) return ''; // Proteção contra valores undefined ou null
+  if (!elo) return ferroImg; // Proteção contra valores undefined ou null
   
   const upperElo = elo.toUpperCase();
-  return eloIcons[upperElo as keyof typeof eloIcons] || 
-    'https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/images/ranked-mini-regalia/provisional.png'; // Imagem padrão caso o elo não seja encontrado
+  return eloIcons[upperElo as keyof typeof eloIcons] || ferroImg; // Imagem padrão caso o elo não seja encontrado
 };
 
 // Função para abrir o perfil do jogador no DeepLOL
